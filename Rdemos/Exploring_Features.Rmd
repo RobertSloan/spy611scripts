@@ -1,7 +1,9 @@
 Exploring SP500 Feature set
 ======================================
 Robert Sloan    
-June 8, 2014    
+June 12, 2014
+This is a work in progress...     
+    
 Exploring feature file     
 This is a R Markdown file    
 Load into R Studio.  install.packages("knitr") if not already done so    
