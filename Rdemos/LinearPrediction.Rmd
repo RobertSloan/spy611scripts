@@ -1,0 +1,61 @@
+Linear Prediction for SP500 feature set
+======================================
+Robert Sloan    
+June 12, 2014    
+This is a work in progress...    
+    
+Investigating fitting Linear model    
+This is a R Markdown file    
+Load into R Studio.  install.packages("knitr") if not already done so    
+Run by clickin on the 'Knit HTML' icon in the title bar above code view    
+    
+load and display start of feature file   
+    
+```{r load feature file}
+setwd("/Users/Robert/Dropbox/Class/Mr Stock Market meet Mr Data Scientist/data")
+#read in Feature file
+sp500f <- read.table(file = "featuresSP500.csv", header=TRUE, sep=",")
+head(sp500f)   
+```
+    
+Fit Linear Model    
+    
+```{r simple linear model}
+fit<-lm(leadcp~lag_cp1d+lag_cp2d+lag_cp1w+ma100+Volume,data=sp500f)
+```   
+           
+summary and anova    
+
+```{r summary and anova}
+anova(fit)  # correctness of model
+summary(fit) #summary of model
+```
+    
+Summary table of regression coefficients    
+    
+```{r summary table, results='asis'}
+library(xtable)
+xt<-xtable(summary(fit))
+print(xt,type="html")
+```
+
+
+Analysis of variance table    
+    
+```{r anova table, results='asis'}
+xt<-xtable(anova(fit)) # correctness of model
+print(xt,type="html") 
+```    
+ 
+   
+Plot of residuals etc    
+    
+```{r residual plots}
+opar <- par(mfrow = c(2,2), oma = c(0, 0, 1.1, 0))
+plot(fit, las = 1)      # Residuals, Fitted, ...
+par(opar)
+```
+
+
+
+
