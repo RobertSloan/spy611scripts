@@ -117,4 +117,9 @@ featuresSP500[, "ma100"] <- tempavg/100
 
 # standardization of features
 write.table(featuresSP500,  file="featuresSP500.csv", sep=",",row.names=FALSE)
-
+select <- c("Close","lag_cp1d","lag_cp2d","lag_cp1w","lag_cp2w","lag_cp1m","lag_cp2m","ma100","Volume" )
+selectFeatures<-featuresSP500[,select]
+pairs(leadcp~Close+lag_cp1d+ma100, data=featuresSP500)  # <<<<<<WATCH OUT HANGS
+pairs(~ Fertility + Education + Catholic, data = swiss,
+      subset = Education < 20, main = "Swiss data, Education < 20")
+pairs(selectFeatures)
