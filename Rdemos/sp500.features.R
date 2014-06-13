@@ -1,5 +1,5 @@
 # sp500.features.R
-# 2014-5-31
+# 2014-6-12
 # R.Sloan
 #
 # This R code is deisgned to run in R Studio, development environment for R includes plot screen
@@ -58,8 +58,8 @@ attach(sp500) # now sp500 data.frame is assumed
 # Using the past to predict the future.  For each date in the past we create a new data.frame
 # of features which includes differences in prices for dates in the past
 #  and changes for dates in the future
-# We create lags (differences) from today to 2 days ago, 1 week ago, 2 weeks ago, 1 month ago and 2 months ago
-# A feature of the 100 day moving average (ma100)
+# We create lags (differences) from today to 1 day ago, 2 days ago, 1 week ago, 2 weeks ago, 1 month ago and 2 months ago
+# A feature of the 100 day moving average (ma100) and Volume of stock traded
 # And features of how the market did (lead) 1 day in the future, 2 days and 1 week
 
 # We are looking at creating this from the S&P500 data.
@@ -78,7 +78,7 @@ toSkip <- 106 # total days skipped
 numberOfRows <- nrow(sp500)-toSkip # number of valid data rows
 
 # create a new vector which is 106 trading days shorter which contains Date, Close ...
-columnNames <- c("Date", "Close","lag_cp2d","lag_cp1w","lag_cp2w","lag_cp1m","lag_cp2m","ma100",
+columnNames <- c("Date", "Close","lag_cp1d","lag_cp2d","lag_cp1w","lag_cp2w","lag_cp1m","lag_cp2m","ma100",
                  "Volume","leadcp","leadcp2d","leadcp1w" )
 numberOfColumns <- length(columnNames)
 featuresSP500 <- data.frame(matrix(ncol = numberOfColumns, nrow = numberOfRows))  # Create Empty Data Frame
@@ -94,6 +94,7 @@ featuresSP500$Volume <- Volume[7:(numberOfRows+6)]
 # Rewrite the loop in Robert's code in a matrix/vector format so that it runs faster. Also a minor note: 
 # the average of past 100 days should be mean(Close[(i+6):(i+105)]).
 
+featuresSP500[1:(numberOfRows),"lag_cp1d"] <- Close[7:(numberOfRows+6)] - Close[8:(numberOfRows+7)]
 featuresSP500[1:(numberOfRows),"lag_cp2d"] <- Close[7:(numberOfRows+6)] - Close[9:(numberOfRows+8)]
 featuresSP500[1:(numberOfRows),"lag_cp1w"] <- Close[7:(numberOfRows+6)] - Close[12:(numberOfRows+11)]
 featuresSP500[1:(numberOfRows),"lag_cp2w"] <- Close[7:(numberOfRows+6)] - Close[17:(numberOfRows+16)]
@@ -115,5 +116,5 @@ featuresSP500[, "ma100"] <- tempavg/100
 #head(featuresSP500)
 
 # standardization of features
-write.table(featuresSP500,  file="featuresSP500.1.csv", sep=",",row.names=FALSE)
+write.table(featuresSP500,  file="featuresSP500.csv", sep=",",row.names=FALSE)
 
