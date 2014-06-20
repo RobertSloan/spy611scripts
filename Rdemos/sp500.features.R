@@ -23,6 +23,10 @@
 # Peter Li: Simplified concept for calculating the maximum number of Rows (Stock days)
 #        for output feature data frame possible given the raw data set and the features desires
 # Robert Sloan: moved lag feature creation to function
+# 6/18/2014 R. Sloan created functions for lead, lag and moving average.  
+#           Modify lag.days, lead.days and moving.avg.days to select which features desired
+#           To simplify the use of this data by prediction algorithms use only
+#           only one lead.day prediction Target
 
 rm(list = ls()) # remove any existing list objects
 
@@ -84,7 +88,7 @@ attach(sp500) # now sp500 data.frame is assumed
 
 # The following vector determines which lag features will be created
 lag.days <- c(1, 2, 5, 10, 20, 40)  # 1 day, 2 days, 1 week, 2 weeks, 1 month, 2 months
-lead.days <- c(1, 2, 5) # 1 day, 2 days, 1 week
+lead.days <- c(1) # 1 day, 2 days, 5 days = 1 week
 moving.avg.days <- c(10, 30, 50, 100)  # NOTE this is stock market days 
                         # for which  100 is actually multiplied by 7/5 to yield 140 calendar days
 # Calculate the maximum range of the stock history we can use
@@ -112,17 +116,6 @@ for (i in lag.days){
     sp[, columnName] <- newColumn
 }
 
-# This function creates the lead data to be generated
-leadVector <- function(rawCloseData, lead, startingRow, numberOfRows){
-    rawCloseData[(startingRow-lead):(numberOfRows+startingRow-lead-1)] - rawCloseData[startingRow:(numberOfRows+startingRow-1)]    
-}
-
-# Add the columns for the lead features
-for (i in lead.days){
-    columnName <-paste("lead_",i,"d",sep="")
-    newColumn <- leadVector(sp500$Close, i, first.obs, calcRows)
-    sp[, columnName] <- newColumn
-}
 
 # This function creates the Moving Average data to be generated
 MovingAverageVector <- function(rawCloseData, movingAverage, startingRow){
@@ -140,6 +133,18 @@ MovingAverageVector <- function(rawCloseData, movingAverage, startingRow){
 for (i in moving.avg.days){
     columnName <-paste("ma",i,sep="")
     newColumn <- MovingAverageVector(sp500$Close, i, first.obs)
+    sp[, columnName] <- newColumn
+}
+
+# This function creates the prediction target lead data
+leadVector <- function(rawCloseData, lead, startingRow, numberOfRows){
+    rawCloseData[(startingRow-lead):(numberOfRows+startingRow-lead-1)] - rawCloseData[startingRow:(numberOfRows+startingRow-1)]    
+}
+
+# Add the columns for the lead features
+for (i in lead.days){
+    columnName <-paste("lead_",i,"d",sep="")
+    newColumn <- leadVector(sp500$Close, i, first.obs, calcRows)
     sp[, columnName] <- newColumn
 }
 
