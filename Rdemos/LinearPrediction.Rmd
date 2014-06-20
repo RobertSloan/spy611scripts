@@ -15,13 +15,16 @@ load and display start of feature file
 setwd("/Users/Robert/Dropbox/Class/Mr Stock Market meet Mr Data Scientist/data")
 #read in Feature file
 sp500f <- read.table(file = "featuresSP500.csv", header=TRUE, sep=",")
+#remove columns 'Date' and 'CLose' to so that only useful features remain
+sp500f <- sp500f[,-which(names(sp500f) %in% c("Date","Close"))]
 head(sp500f)   
 ```
     
-Fit Linear Model    
+Fit Linear Model
+assuming all columns are features except lead_1d
     
 ```{r simple linear model}
-fit<-lm(leadcp~lag_cp1d+lag_cp2d+lag_cp1w+ma100+Volume,data=sp500f)
+fit<-lm(lead_1d ~ .,data=sp500f)  # fit linear model for target lead_1d
 ```   
            
 summary and anova    
