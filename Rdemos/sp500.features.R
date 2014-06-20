@@ -1,5 +1,5 @@
 # sp500.features.R
-# 2014-6-12
+# 2014-6-15
 # R.Sloan
 #
 # This R code is deisgned to run in R Studio, development environment for R includes plot screen
@@ -14,20 +14,17 @@
 
 # This code is to create a feature set as defined in slide 7 http://www.spy611.com/blog/demo_features
 
-
 # The code is written by James (Xinghai) Hu. It uses the features proposed by Robert Sloan.
 # 5/31/2014 
-# Robert Sloan slight improvements and save feature file as featuresSP500.Rdata
-# Sanjay Patel added Feature sales 'Volume' for SP500
-# Zvi Eintracht install only new package
+# Robert Sloan: slight improvements and save feature file as featuresSP500.Rdata
+# Sanjay Patel: added Feature sales 'Volume' for SP500
+# Zvi Eintracht: install only new package
+# 6/15/2014
+# Peter Li: Simplified concept for calculating the maximum number of Rows (Stock days)
+#        for output feature data frame possible given the raw data set and the features desires
+# Robert Sloan: moved lag feature creation to function
 
 rm(list = ls()) # remove any existing list objects
-
-# install packages as needed. Packages only need to be installed once
-#packages <- c("manipulate")
-#install.packages(setdiff(packages, rownames(installed.packages())))
-
-library(manipulate)   
 
 # set the working directory to where you place the GSPC.csv data file
 setwd("/Users/Robert/Dropbox/Class/Mr Stock Market meet Mr Data Scientist/data")
@@ -45,6 +42,10 @@ index <- nrow(sp500):1
 plot(sp500$Close[index], pch=".")  
 
 # Create an interactive plot with a start and size for the data
+# install packages as needed. Packages only need to be installed once
+#packages <- c("manipulate")
+#install.packages(setdiff(packages, rownames(installed.packages())))
+#library(manipulate)   
 # manipulate(
 #  plot(sp500$Close[index][x.min: (x.min+x.size)], type = "l", pch="."),  # type l is line
 #  x.min = slider(0,nrow(sp500), initial = 10000),
@@ -74,52 +75,74 @@ attach(sp500) # now sp500 data.frame is assumed
 # i.e. for example we cannot look past the last date in our data as it requires dates before the last 
 #  value we have
 # we need to skip the first 6 days for lead features and the last 100 days for lag features
-toSkip <- 106 # total days skipped
-numberOfRows <- nrow(sp500)-toSkip # number of valid data rows
 
-# create a new vector which is 106 trading days shorter which contains Date, Close ...
-columnNames <- c("Date", "Close","lag_cp1d","lag_cp2d","lag_cp1w","lag_cp2w","lag_cp1m","lag_cp2m","ma100",
-                 "Volume","leadcp","leadcp2d","leadcp1w" )
-numberOfColumns <- length(columnNames)
-featuresSP500 <- data.frame(matrix(ncol = numberOfColumns, nrow = numberOfRows))  # Create Empty Data Frame
-# Add Column Names
-colnames(featuresSP500) <- columnNames
-featuresSP500$Date <- Date[7:(numberOfRows+6)]
-featuresSP500$Close <- Close[7:(numberOfRows+6)]
-featuresSP500$Volume <- Volume[7:(numberOfRows+6)]
+## Parameters ##
 
+# NOTE: The following are stock market days. Stock market is open only 5 days/week
+#  excluding holidays.  So 5 stock market days = 1 calendar week.  
+#  20 stock market days = ~ 1 month (assuming a 4 week month)
 
-# create the lag, moving average and lead features
+# The following vector determines which lag features will be created
+lag.days <- c(1, 2, 5, 10, 20, 40)  # 1 day, 2 days, 1 week, 2 weeks, 1 month, 2 months
+lead.days <- c(1, 2, 5) # 1 day, 2 days, 1 week
+moving.avg.days <- c(10, 30, 50, 100)  # NOTE this is stock market days 
+                        # for which  100 is actually multiplied by 7/5 to yield 140 calendar days
+# Calculate the maximum range of the stock history we can use
+sp500$idx <- 1:nrow(sp500)  # add an index row
+first.obs <- sp500[1, "idx"] + max(lead.days)
+last.obs <- sp500[nrow(sp500), "idx"] - max(c(lag.days, moving.avg.days))
+calcRows <- last.obs - first.obs+1
 
-# Rewrite the loop in Robert's code in a matrix/vector format so that it runs faster. Also a minor note: 
-# the average of past 100 days should be mean(Close[(i+6):(i+105)]).
+# Copy some of the raw data directly
+columnsToCopy =  c("Date", "Close","Volume")
+# Subset for "complete" features lags, leads and moving avg.
+sp <- sp500[sp500$idx >= first.obs & sp500$idx <= last.obs, columnsToCopy]
 
-featuresSP500[1:(numberOfRows),"lag_cp1d"] <- Close[7:(numberOfRows+6)] - Close[8:(numberOfRows+7)]
-featuresSP500[1:(numberOfRows),"lag_cp2d"] <- Close[7:(numberOfRows+6)] - Close[9:(numberOfRows+8)]
-featuresSP500[1:(numberOfRows),"lag_cp1w"] <- Close[7:(numberOfRows+6)] - Close[12:(numberOfRows+11)]
-featuresSP500[1:(numberOfRows),"lag_cp2w"] <- Close[7:(numberOfRows+6)] - Close[17:(numberOfRows+16)]
-featuresSP500[1:(numberOfRows),"lag_cp1m"] <- Close[7:(numberOfRows+6)] - Close[27:(numberOfRows+26)]
-featuresSP500[1:(numberOfRows),"lag_cp2m"] <- Close[7:(numberOfRows+6)] - Close[47:(numberOfRows+46)]
-featuresSP500[1:(numberOfRows),"leadcp"] <- Close[6:(numberOfRows+5)] - Close[7:(numberOfRows+6)]
-featuresSP500[1:(numberOfRows),"leadcp2d"] <- Close[5:(numberOfRows+4)] - Close[7:(numberOfRows+6)]
-featuresSP500[1:(numberOfRows),"leadcp1w"] <- Close[2:(numberOfRows+1)] - Close[7:(numberOfRows+6)]
-
-# Calculate moving average
-tempavg <- rep(0, (numberOfRows))  # a temporary vector used for computing moving average (average of 100 prices)
-tempavg[1] <- sum(Close[7:106])
-for (i in 2: length(tempavg) )
-{
-    tempavg[i] <- tempavg[i-1] - Close[i+5] + Close[i+105]
+# this function creates a new vector of lag differences of stock market observations
+#  a log of 1 is a vector of differences from current index to one day ago
+#  a lag of 5 is a vector of differences from current indes to one calendar week ago
+lagVector <- function(rawCloseData, lag, startingRow, numberOfRows){
+    rawCloseData[startingRow:(numberOfRows+startingRow-1)] - rawCloseData[(startingRow+lag):(numberOfRows+startingRow+lag-1)]   
 }
-featuresSP500[, "ma100"] <- tempavg/100
 
-#head(featuresSP500)
+# Add the columns for the lag features
+for (i in lag.days){
+    columnName <-paste("lag_",i,"d",sep="")
+    newColumn <- lagVector(sp500$Close, i, first.obs, calcRows)
+    sp[, columnName] <- newColumn
+}
 
-# standardization of features
-write.table(featuresSP500,  file="featuresSP500.csv", sep=",",row.names=FALSE)
-select <- c("Close","lag_cp1d","lag_cp2d","lag_cp1w","lag_cp2w","lag_cp1m","lag_cp2m","ma100","Volume" )
-selectFeatures<-featuresSP500[,select]
-pairs(leadcp~Close+lag_cp1d+ma100, data=featuresSP500)  # <<<<<<WATCH OUT HANGS
-pairs(~ Fertility + Education + Catholic, data = swiss,
-      subset = Education < 20, main = "Swiss data, Education < 20")
-pairs(selectFeatures)
+# This function creates the lead data to be generated
+leadVector <- function(rawCloseData, lead, startingRow, numberOfRows){
+    rawCloseData[(startingRow-lead):(numberOfRows+startingRow-lead-1)] - rawCloseData[startingRow:(numberOfRows+startingRow-1)]    
+}
+
+# Add the columns for the lead features
+for (i in lead.days){
+    columnName <-paste("lead_",i,"d",sep="")
+    newColumn <- leadVector(sp500$Close, i, first.obs, calcRows)
+    sp[, columnName] <- newColumn
+}
+
+# This function creates the Moving Average data to be generated
+MovingAverageVector <- function(rawCloseData, movingAverage, startingRow){
+#    rawCloseData[(startingRow-lead):(numberOfRows+startingRow-lead-1)] - rawCloseData[startingRow:(numberOfRows+startingRow-1)]    
+    tempavg <- rep(0, (calcRows))  # a temporary vector used for computing moving average (average of 100 prices)
+    tempavg[1] <- sum(sp500$Close[first.obs:(first.obs+movingAverage-1)])
+    for (i in 2: length(tempavg) )
+    {
+        tempavg[i] <- tempavg[i-1] - sp500$Close[i+first.obs-2] + sp500$Close[i+first.obs+movingAverage-2]
+    }
+    tempavg/movingAverage
+}
+
+# Add the columns for the Moving Average features
+for (i in moving.avg.days){
+    columnName <-paste("ma",i,sep="")
+    newColumn <- MovingAverageVector(sp500$Close, i, first.obs)
+    sp[, columnName] <- newColumn
+}
+
+
+write.table(sp,  file="featuresSP500.csv", sep=",",row.names=FALSE)
+
