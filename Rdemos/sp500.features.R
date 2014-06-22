@@ -86,7 +86,12 @@ attach(sp500) # now sp500 data.frame is assumed
 #  excluding holidays.  So 5 stock market days = 1 calendar week.  
 #  20 stock market days = ~ 1 month (assuming a 4 week month)
 
-# The following vector determines which lag features will be created
+# select a cut-off date.  Create features only for data after this cut off date
+cutOffDate<-"2009-02-01"
+sp500$Date<-as.Date(sp500$Date)  # change the Date column to be of class Date
+sp500<-sp500[(sp500$Date>cutOffDate),]
+
+# The following vectors determine which lag, lead, moving average features will be created
 lag.days <- c(1, 2, 5, 10, 20, 40)  # 1 day, 2 days, 1 week, 2 weeks, 1 month, 2 months
 lead.days <- c(1) # 1 day, 2 days, 5 days = 1 week
 moving.avg.days <- c(10, 30, 50, 100)  # NOTE this is stock market days 
