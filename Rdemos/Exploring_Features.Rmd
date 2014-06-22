@@ -3,6 +3,9 @@ Exploring SP500 Feature set
 Robert Sloan    
 June 12, 2014
 This is a work in progress...     
+TODO    
+[ ] Add more tests for correlations between features and target       
+
     
 Exploring feature file     
 This is a R Markdown file    
@@ -10,18 +13,17 @@ Load into R Studio.  install.packages("knitr") if not already done so
 Run by clickin on the 'Knit HTML' icon in the title bar above code view    
     
 load and display start of feature file    
-Change working directory to where feature file is stored    
+Change working directory to where feature file is stored  
+
 ```{r load feature file, cache=TRUE}
 setwd("/Users/Robert/Dropbox/Class/Mr Stock Market meet Mr Data Scientist/data")
 #read in Feature file
 sp500f <- read.table(file = "featuresSP500.csv", header=TRUE, sep=",")
+#remove columns 'Date' and 'CLose'
+sp500f <- sp500f[,-which(names(sp500f) %in% c("Date","Close"))]
 head(sp500f)   
 ```
     
-Investigating the correlation between features
-```{r Pairwise feature comparison, cache=TRUE}
-pairs(leadcp~lag_cp1d+lag_cp2d+ma100+Volume, data=sp500f)  # 
-```
     
 Summarize data
 ```{r data summary}
@@ -42,11 +44,36 @@ dim(sp500f)
 a <- na.omit(sp500f)
 dim(a)  # if dimension are the same no missing data
 ```
-    
+     
+ Dependence Tests    
+      
+```{r dependance tests, cache=TRUE} 
+# There should be a way to do this automatically for all features 
+mytable <- xtabs(~lead_1d+lag_1d, data=sp500f)
+chisq.test(mytable)
+library(vcd)
+assocstats(mytable) 
+``` 
+ 
 Histograms
 ```{r histograms}
-hist(sp500f$lag_cp1d,main="1 day lag",breaks=100)
-hist(sp500f$lag_cp2d,main="2 day lag",breaks=100)
-hist(sp500f$ma100,main="100 Day Moving Average",breaks=100)
-hist(sp500f$Volume,main="Volume",breaks=100,ylim=c(0,2000))
+
+for (i in 1:(length(sp500f)-1)) {
+#    hist(sp500f[,i],main=colnames(sp500f)[i],breaks=100)
+    hist(sp500f[,i],breaks=100)
+}
+
+
+#hist(sp500f$lag_cp1d,main="1 day lag",breaks=100)
+#hist(sp500f$lag_cp2d,main="2 day lag",breaks=100)
+#hist(sp500f$ma100,main="100 Day Moving Average",breaks=100)
+#hist(sp500f$Volume,main="Volume",breaks=100,ylim=c(0,2000))
+```
+
+
+Investigating the correlation between features 
+NOTE:  with many features this takes a very long time
+    
+```{r Pairwise feature comparison, cache=TRUE}
+pairs(lead_1d ~ ., data=sp500f)  # 
 ```
