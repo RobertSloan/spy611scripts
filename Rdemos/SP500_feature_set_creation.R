@@ -31,9 +31,9 @@
 rm(list = ls()) # remove any existing list objects
 
 # set the working directory to where you place the GSPC.csv data file
-setwd("/Users/Robert/Dropbox/Class/Mr Stock Market meet Mr Data Scientist/data")
+setwd("/Users/Robert/Dropbox/Class/Mr Stock Market meet Mr Data Scientist/spy611scripts/Rdemos")
 #read in some price data
-sp500 <- read.table(file = "GSPC.csv", header=TRUE, sep=",")
+sp500 <- read.table(file = "SP500_data.csv", header=TRUE, sep=",")
 head(sp500)   # show the first few dates from the data showing the column lables
 
 # since the most recent date is first plots of the data would appear backwards
@@ -154,5 +154,5 @@ for (i in lead.days){
 }
 
 
-write.table(sp,  file="featuresSP500.csv", sep=",",row.names=FALSE)
+write.table(sp,  file="SP500_features.csv", sep=",",row.names=FALSE)
 

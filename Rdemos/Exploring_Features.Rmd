@@ -17,9 +17,9 @@ Change working directory to where feature file is stored
 
 
 ```{r load feature file, cache=TRUE}
-setwd("/Users/Robert/Dropbox/Class/Mr Stock Market meet Mr Data Scientist/data")
+setwd("/Users/Robert/Dropbox/Class/Mr Stock Market meet Mr Data Scientist/spy611scripts/Rdemos")
 #read in Feature file
-sp500f <- read.table(file = "featuresSP500.csv", header=TRUE, sep=",")
+sp500f <- read.table(file = "SP500_features.csv", header=TRUE, sep=",")
 #remove columns 'Date' and 'CLose'
 sp500f <- sp500f[,-which(names(sp500f) %in% c("Date","Close"))]
 head(sp500f)   

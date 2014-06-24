@@ -24,9 +24,9 @@ sp500 <- read.csv(url, colClasses = c('Date' = 'Date'))
 Save S&P500 data  in file GSPC.csv
 ```{r Save File}
 # set the working directory to where you place the GSPC.csv data file
-setwd("/Users/Robert/Dropbox/Class/Mr Stock Market meet Mr Data Scientist/data")
+setwd("/Users/Robert/Dropbox/Class/Mr Stock Market meet Mr Data Scientist/spy611scripts/Rdemos")
 # Write the file
-write.table(sp500,  file="GSPC.csv", sep=",",row.names=FALSE)
+write.table(sp500,  file="SP500_data.csv", sep=",",row.names=FALSE)
 ```
 
 Plot S&P500 data

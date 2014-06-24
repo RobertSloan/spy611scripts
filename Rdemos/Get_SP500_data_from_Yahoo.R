@@ -13,10 +13,10 @@ url <- paste("http://www.quandl.com/api/v1/datasets/YAHOO/INDEX_GSPC.csv?&trim_s
 sp500 <- read.csv(url, colClasses = c('Date' = 'Date'))
 
 # set the working directory to where you place the GSPC.csv data file
-setwd("/Users/Robert/Dropbox/Class/Mr Stock Market meet Mr Data Scientist/data")
+setwd("/Users/Robert/Dropbox/Class/Mr Stock Market meet Mr Data Scientist/spy611scripts/Rdemos")
 
 # Write the file
-write.table(sp500,  file="GSPC.csv", sep=",",row.names=FALSE)
+write.table(sp500,  file="SP500_Data.csv", sep=",",row.names=FALSE)
 
 # optionally create an interactive plot of the S&P500 data
 manipulate(
