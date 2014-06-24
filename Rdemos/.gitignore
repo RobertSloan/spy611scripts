@@ -1,0 +1,6 @@
+*.html
+*.md
+cache\
+figure\
+*_cache\
+*_files\
