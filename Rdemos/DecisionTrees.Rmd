@@ -1,0 +1,53 @@
+Decision Trees for SP500 feature set
+======================================
+Robert Sloan    
+June 20, 2014    
+This is a work in progress... 
+TODO
+[ ]  Still figuring out how to plot
+    
+Investigating creating Decision trees   
+This is a R Markdown file    
+Load into R Studio.  install.packages("knitr") if not already done so    
+Run by clickin on the 'Knit HTML' icon in the title bar above code view    
+    
+load and display start of feature file   
+
+```{r load feature file}
+# The 'rpart' package provides the 'rpart' function.
+require(rpart, quietly=TRUE)
+
+setwd("/Users/Robert/Dropbox/Class/Mr Stock Market meet Mr Data Scientist/data")
+#read in Feature file
+sp500f <- read.table(file = "featuresSP500.csv", header=TRUE, sep=",")
+#remove columns 'Date' and 'CLose'
+sp500f <- sp500f[,-which(names(sp500f) %in% c("Date","Close"))]
+
+head(sp500f)  
+```    
+    
+Create Decision Tree    
+    
+```{r simple linear model}
+#fit<-lm(leadcp~lag_cp1d+lag_cp2d+lag_cp1w+ma100+Volume,data=sp500f)
+tree <- rpart(lead_1d ~ .,
+                   data=sp500f,
+                   method="anova")
+```   
+    
+Print tree results    
+      
+```{r print tree text results}
+print(tree)
+printcp(tree)
+cat("\n")
+```
+    
+Plot the Decision Treee    
+    
+```{r Plot the Decision Tree}
+# Plot the resulting Decision Tree.
+# usint the rpart.plot package.
+plot(tree, main="Decision Tree Features")
+```
+
